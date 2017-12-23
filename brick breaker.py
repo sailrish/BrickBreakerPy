@@ -21,7 +21,6 @@ dh=400
 screen=pygame.display.set_mode([dw,dh])
 pygame.display.set_caption("Brick Breaker")
 clock=pygame.time.Clock()
-fps=10
 def msg(txt,color,size,x,y):
     font=pygame.font.SysFont("bold",size)
     msgtxt=font.render(txt,True,color)
@@ -55,7 +54,7 @@ class Player(pygame.sprite.Sprite):
            self.rect.left=0
             
 class Ball(pygame.sprite.Sprite):
-    def __init__(self,p,w):
+    def __init__(self,p,w,c):
         super().__init__()
         self.image=pygame.image.load("b1.png")
         self.image=pygame.transform.scale(self.image,[25,25])
@@ -65,21 +64,26 @@ class Ball(pygame.sprite.Sprite):
         self.rect.y=200
         self.p=p
         self.w=w
+        self.c=c
         self.vy=3
         self.vx=0
         self.t_collide=False
         self.b_collide=False
         self.score=0
     def hit_wall(self):
-        hits=pygame.sprite.groupcollide(balls,walls,False,True)
+        hits=pygame.sprite.groupcollide(balls,self.c.walls,False,True)
+        
+        
         if hits:
+            
             return True
         else:
             return False
     def hit_player(self):
-        hits=pygame.sprite.spritecollide(p,balls,False)
+        hits=pygame.sprite.spritecollide(self.p,balls,False)
         if hits:
-            return True
+            
+                return True
         else:
             return False
     def Score(self):
@@ -94,11 +98,11 @@ class Ball(pygame.sprite.Sprite):
                self.vx=random.randrange(1,3)
                self.vy=-3
                self.b_collide=False
-       if self.rect.top<=0 :
+       elif self.rect.top<=0 :
            self.t_collide=True
            self.vx=random.randrange(-3,3)
            self.vy=3
-       if self.rect.right>=dw:
+       elif self.rect.right>=dw:
            if self.t_collide:
                self.vx=random.randrange(-3,-1)
                self.vy=3
@@ -107,11 +111,11 @@ class Ball(pygame.sprite.Sprite):
                self.vx=random.randrange(-3,-1)
                self.vy=-3
                self.b_collide=False
-       if self.hit_player():
+       elif self.hit_player():
            self.vx=random.randrange(-3,3)
            self.vy=-3
            self.b_collide=True
-       if self.hit_wall():
+       elif self.hit_wall():
            self.vx=random.randrange(-3,3)
            self.vy=3
            self.score+=1
@@ -132,7 +136,9 @@ def intro():
 
     screen.fill(White)
     msg("Brick Breaker",Red,40,200,100)
-    
+    icon=pygame.image.load("bimg1.png")
+    icon=pygame.transform.scale(icon,[200,150])
+    screen.blit(icon,[100,130])
     wait=1
     
     while wait:
@@ -175,8 +181,25 @@ def pause():
                 if event.key==pygame.K_SPACE:
                     paused=0
         pygame.display.flip()
+class Map:
+    def __init__(self,map_file):
+        self.map_file=map_file
+        self.map_data=[]
+        self.walls=pygame.sprite.Group()
+    def update(self):
+        with open(self.map_file,'r+') as f:
+          for line in f:
+              self.map_data.append(line)
+        for row ,tiles in enumerate(self.map_data):
+            for col,tile in enumerate(tiles):
+                    if tile=='1':
+                        self.w=Walls(col,row)
+                        self.walls.add(self.w)
+                        all_sprites.add(self.walls)
 running=True
 start=True
+level=False
+gover=False
 while running:
     clock.tick(60)
     for event in pygame.event.get():
@@ -195,35 +218,63 @@ while running:
         walls=pygame.sprite.Group()
         p=Player(200,350)
         all_sprites.add(p)
-        w=Walls(0,0)
+        c=Map("map1.txt")
+        c.update()
+                 
 
-        walls.add(w)
-        all_sprites.add(w)
-        w.kill()
-        map_data=[]
-        with open("map.txt",'r+') as f:
-            for line in f:
-                map_data.append(line)
-        for row ,tiles in enumerate(map_data):
-                for col,tile in enumerate(tiles):
-                        if tile=='1':
-                            w=Walls(col,row)
-                            walls.add(w)
-                            all_sprites.add(w)         
-        b=Ball(p,w)
+        b=Ball(p,c.w,c)
         balls.add(b)
         all_sprites.add(b)
-       
+    if level:
+        level=False
+        all_sprites=pygame.sprite.Group()
+        balls=pygame.sprite.Group()
+        walls=pygame.sprite.Group()
+        p=Player(200,350)
+        all_sprites.add(p)
+        c=Map("map.txt")
+        c.update()              
+        b=Ball(p,c.w,c)
+        balls.add(b)
+        all_sprites.add(b)
+        
+    if gover:
+        gover=False
+        all_sprites=pygame.sprite.Group()
+        balls=pygame.sprite.Group()
+        walls=pygame.sprite.Group()
+        p=Player(200,350)
+        all_sprites.add(p)
+        c=Map("map1.txt")
+        c.update()
+        b=Ball(p,c.w,c)
+        balls.add(b)
+        all_sprites.add(b)
     all_sprites.update()
-    
+    if len(c.walls.sprites())<=0:
+        level=True
+        
     screen.fill(White)
     if b.rect.bottom>=dh:
           screen.fill(White)
           msg("Game Over!",Red,40,200,200)
           p.kill()
           b.kill()
+          all_sprites.remove(c.walls)
+          for event in pygame.event.get():
+              if event.type==pygame.QUIT:
+                  pygame.quit()
+                  quit()
+              if event.type==pygame.KEYDOWN:
+                  if event.key==pygame.K_RETURN:
+                      gover=True
+          
     all_sprites.draw(screen)
     b.Score()
     pygame.display.flip()
+    
+    
+        
+    
 pygame.quit()
 quit()
