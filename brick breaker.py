@@ -1,4 +1,5 @@
 import pygame,random,time
+
 pygame.init()
 Aqua =( 0, 255, 255)
 Black= ( 0, 0, 0)
@@ -21,6 +22,8 @@ dh=400
 screen=pygame.display.set_mode([dw,dh])
 pygame.display.set_caption("Brick Breaker")
 clock=pygame.time.Clock()
+
+
 def msg(txt,color,size,x,y):
     font=pygame.font.SysFont("bold",size)
     msgtxt=font.render(txt,True,color)
@@ -28,6 +31,8 @@ def msg(txt,color,size,x,y):
     msgrect.center=x,y
     screen.blit(msgtxt,msgrect)
 ##    pygame.display.flip()
+
+
 class Player(pygame.sprite.Sprite):
     def __init__(self,x,y):
         super().__init__()
@@ -40,6 +45,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.y=y
         self.vx=0
         self.vy=0
+
     def update(self):
        
        keys=pygame.key.get_pressed()
@@ -52,7 +58,8 @@ class Player(pygame.sprite.Sprite):
            self.rect.right=dw
        if self.rect.left<=0:
            self.rect.left=0
-            
+
+
 class Ball(pygame.sprite.Sprite):
     def __init__(self,p,w,c):
         super().__init__()
